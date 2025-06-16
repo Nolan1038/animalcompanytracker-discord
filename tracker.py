@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime
 import os
 from keep_alive import keep_alive
+import json
 
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 CHANNEL_ID = int(os.getenv("DISCORD_CHANNEL_ID"))
@@ -25,13 +26,26 @@ def fetch_version():
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 OPR/119.0.0.0"
     }
     response = requests.get(META_URL, headers=headers)
-    soup = BeautifulSoup(response.text, "html.parser")
-    version_spans = soup.find_all("span")
+    if response.status_code != 200:
+        print("Failed to fetch Meta store page.")
+        return None
 
-    for span in version_spans:
-        if span.text.strip().lower().startswith("version"):
-            return span.text.strip().split(" ")[-1]  # Extract version number
-    return None
+    soup = BeautifulSoup(response.text, "html.parser")
+    script_tag = soup.find("script", string=lambda t: t and "experienceDetails" in t)
+
+    if not script_tag:
+        print("Could not find the experienceDetails JSON.")
+        return None
+
+    try:
+        json_text = script_tag.string
+        json_start = json_text.find('{')
+        json_data = json.loads(json_text[json_start:])
+        version = json_data["props"]["pageProps"]["experienceDetails"]["version"]
+        return version
+    except Exception as e:
+        print(f"Failed to parse version from JSON: {e}")
+        return None
 
 @bot.event
 async def on_ready():
