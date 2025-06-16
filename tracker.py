@@ -21,7 +21,9 @@ last_logged_version = None  # Will update in memory, or persist to a file if nee
 tracking_enabled = False
 
 def fetch_version():
-    headers = {"User-Agent": "Mozilla/5.0"}
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36 OPR/119.0.0.0"
+    }
     response = requests.get(META_URL, headers=headers)
     soup = BeautifulSoup(response.text, "html.parser")
     version_spans = soup.find_all("span")
