@@ -82,5 +82,13 @@ async def tracker_command(interaction: discord.Interaction, action: str):
     else:
         await interaction.response.send_message("❌ Invalid action. Use `start` or `stop`.", ephemeral=True)
 
+@tree.command(name="check", description="Manually check the current version of Animal Company VR.")
+async def check_command(interaction: discord.Interaction):
+    current_version = fetch_version()
+    if current_version:
+        await interaction.response.send_message(f"📦 The current version of Animal Company VR is **{current_version}**.", ephemeral=True)
+    else:
+        await interaction.response.send_message("⚠️ Failed to fetch the current version.", ephemeral=True)
+
 keep_alive()
 bot.run(TOKEN)
