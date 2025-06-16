@@ -6,16 +6,19 @@ from datetime import datetime
 import os
 from keep_alive import keep_alive
 
-
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 CHANNEL_ID = int(os.getenv("DISCORD_CHANNEL_ID"))
 ROLE_ID = int(os.getenv("DISCORD_ROLE_ID"))  # Use the actual ID of the @Update Pings role
 
 intents = discord.Intents.default()
+intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
+tree = bot.tree
 
 META_URL = "https://www.meta.com/en-gb/experiences/animal-company/7190422614401072/"
 last_logged_version = None  # Will update in memory, or persist to a file if needed
+
+tracking_enabled = False
 
 def fetch_version():
     headers = {"User-Agent": "Mozilla/5.0"}
@@ -31,11 +34,20 @@ def fetch_version():
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
+    try:
+        synced = await tree.sync()
+        print(f"Synced {len(synced)} command(s)")
+    except Exception as e:
+        print(f"Failed to sync commands: {e}")
     check_version.start()
 
 @tasks.loop(hours=1)
 async def check_version():
     global last_logged_version
+    global tracking_enabled
+
+    if not tracking_enabled:
+        return
 
     current_version = fetch_version()
     if not current_version:
@@ -55,6 +67,20 @@ async def check_version():
         last_logged_version = current_version
     else:
         print("No update found.")
+
+@tree.command(name="tracker", description="Start or stop the Animal Company version tracker.")
+async def tracker_command(interaction: discord.Interaction, action: str):
+    global tracking_enabled
+    action = action.lower()
+
+    if action == "start":
+        tracking_enabled = True
+        await interaction.response.send_message("✅ Tracker started.", ephemeral=True)
+    elif action == "stop":
+        tracking_enabled = False
+        await interaction.response.send_message("🛑 Tracker stopped.", ephemeral=True)
+    else:
+        await interaction.response.send_message("❌ Invalid action. Use `start` or `stop`.", ephemeral=True)
 
 keep_alive()
 bot.run(TOKEN)
