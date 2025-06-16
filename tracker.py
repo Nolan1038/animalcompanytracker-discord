@@ -4,6 +4,8 @@ import requests
 from bs4 import BeautifulSoup
 from datetime import datetime
 import os
+from keep_alive import keep_alive
+
 
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 CHANNEL_ID = int(os.getenv("DISCORD_CHANNEL_ID"))
@@ -54,4 +56,5 @@ async def check_version():
     else:
         print("No update found.")
 
+keep_alive()
 bot.run(TOKEN)
